@@ -9,6 +9,7 @@ import (
 
 func main() {
 	var cfg app.CliConfig
+	flag.StringVar(&cfg.ConfigPath, "config", "documenter.config.yaml", "The path to the configuration file")
 	flag.Parse()
 
 	cli := app.NewCli(cfg)
