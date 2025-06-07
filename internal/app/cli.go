@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"log"
 	"log/slog"
 	"os"
 	"sync"
@@ -21,6 +20,7 @@ type Scraper interface {
 
 type Logger interface {
 	Warn(format string, v ...any)
+	Info(format string, v ...any)
 }
 
 type Cli struct {
@@ -43,7 +43,13 @@ func NewCli(cfg Config) *Cli {
 		scrapers = append(scrapers, s)
 	}
 
-	loggerHandler := slog.NewTextHandler(os.Stdout, nil)
+	var loggerHandler slog.Handler
+	switch cfg.Logging.Format {
+	case LoggingFormatJSON:
+		loggerHandler = slog.NewJSONHandler(os.Stdout, nil)
+	default:
+		loggerHandler = slog.NewTextHandler(os.Stdout, nil)
+	}
 	logger := slog.New(loggerHandler)
 
 	return &Cli{
@@ -74,14 +80,14 @@ func (c *Cli) startScraper(ctx context.Context, scraper Scraper) {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(c.Config.ScrapeInterval):
+		case <-time.After(c.Config.Scraping.Interval):
 			md, err := scraper.Scrape(ctx)
 			if err != nil {
-				c.Logger.Warn("scraping error: %s", err)
+				c.Logger.Warn("scraping error", "error", err)
 				continue
 			}
 
-			log.Printf("received %d bytes", len(md))
+			c.Logger.Info("scrape successful", "received bytes", len(md))
 		}
 	}
 }

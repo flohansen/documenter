@@ -16,7 +16,9 @@ func TestCli_NewCli(t *testing.T) {
 	t.Run("should create git scraper using config", func(t *testing.T) {
 		// assign
 		config := app.Config{
-			ScrapeInterval: 5 * time.Second,
+			Scraping: app.ScrapingConfig{
+				Interval: 5 * time.Second,
+			},
 			Docs: app.DocsConfig{
 				Sections: []app.SectionConfig{
 					{Name: "Section", Type: app.SectionTypeGit, URL: "https://doesnt-matter1.com"},
@@ -29,7 +31,7 @@ func TestCli_NewCli(t *testing.T) {
 		cli := app.NewCli(config)
 
 		// assert
-		assert.Equal(t, 5*time.Second, cli.Config.ScrapeInterval)
+		assert.Equal(t, 5*time.Second, cli.Config.Scraping.Interval)
 		assert.Len(t, cli.Scrapers, 2)
 	})
 }
@@ -44,11 +46,17 @@ func TestCli_Run(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cli := app.Cli{
 			Config: app.Config{
-				ScrapeInterval: 10 * time.Millisecond,
+				Scraping: app.ScrapingConfig{
+					Interval: 10 * time.Millisecond,
+				},
 			},
 			Scrapers: []app.Scraper{scraperMock},
 			Logger:   loggerMock,
 		}
+
+		loggerMock.EXPECT().
+			Info("scrape successful", "received bytes", 0).
+			Times(2)
 
 		scraperMock.EXPECT().
 			Scrape(ctx).
@@ -72,14 +80,19 @@ func TestCli_Run(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cli := app.Cli{
 			Config: app.Config{
-				ScrapeInterval: 10 * time.Millisecond,
+				Scraping: app.ScrapingConfig{
+					Interval: 10 * time.Millisecond,
+				},
 			},
 			Scrapers: []app.Scraper{scraperMock},
 			Logger:   loggerMock,
 		}
 
 		loggerMock.EXPECT().
-			Warn("scraping error: %s", errors.New("scrape error")).
+			Info("scrape successful", "received bytes", 0).
+			Times(1)
+		loggerMock.EXPECT().
+			Warn("scraping error", "error", errors.New("scrape error")).
 			Times(1)
 
 		scraperMock.EXPECT().
