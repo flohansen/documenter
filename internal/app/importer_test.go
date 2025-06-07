@@ -28,7 +28,7 @@ func TestCli_NewCli(t *testing.T) {
 		}
 
 		// act
-		cli := app.NewCli(config)
+		cli := app.NewImporter(config)
 
 		// assert
 		assert.Equal(t, 5*time.Second, cli.Config.Scraping.Interval)
@@ -44,7 +44,7 @@ func TestCli_Run(t *testing.T) {
 	t.Run("should periodically execute scaper", func(t *testing.T) {
 		// assign
 		ctx, cancel := context.WithCancel(context.Background())
-		cli := app.Cli{
+		cli := app.Importer{
 			Config: app.Config{
 				Scraping: app.ScrapingConfig{
 					Interval: 10 * time.Millisecond,
@@ -78,7 +78,7 @@ func TestCli_Run(t *testing.T) {
 	t.Run("should log warning if scraping fails but continue", func(t *testing.T) {
 		// assign
 		ctx, cancel := context.WithCancel(context.Background())
-		cli := app.Cli{
+		cli := app.Importer{
 			Config: app.Config{
 				Scraping: app.ScrapingConfig{
 					Interval: 10 * time.Millisecond,

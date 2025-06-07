@@ -14,6 +14,6 @@ RUN make
 
 FROM scratch
 
-COPY --from=builder /usr/src/app/dist/server /server
+COPY --from=builder /usr/src/app/dist/importer /importer
 
-ENTRYPOINT ["/server"]
+ENTRYPOINT ["/importer"]

@@ -32,19 +32,19 @@ type Logger interface {
 	Info(format string, v ...any)
 }
 
-// Cli represents the main command-line interface application.
+// Importer represents the main command-line interface application.
 // It manages the configuration, scrapers, and logging for the documentation system.
-type Cli struct {
+type Importer struct {
 	Config   Config    // Application configuration
 	Scrapers []Scraper // List of active scrapers
 	Logger   Logger    // Logger instance for application logging
 }
 
-// NewCli creates a new CLI instance with the provided configuration.
+// NewImporter creates a new CLI instance with the provided configuration.
 // It initializes scrapers based on the configuration sections and sets up
 // the appropriate logger format. Scrapers are created for each configured
 // documentation section, and unsupported section types are skipped.
-func NewCli(cfg Config) *Cli {
+func NewImporter(cfg Config) *Importer {
 	var scrapers []Scraper
 	for _, section := range cfg.Docs.Sections {
 		var s Scraper
@@ -67,7 +67,7 @@ func NewCli(cfg Config) *Cli {
 	}
 	logger := slog.New(loggerHandler)
 
-	return &Cli{
+	return &Importer{
 		Config:   cfg,
 		Scrapers: scrapers,
 		Logger:   logger,
@@ -78,15 +78,15 @@ func NewCli(cfg Config) *Cli {
 // It launches each configured scraper in its own goroutine and waits for
 // all scrapers to complete. The method blocks until the context is cancelled
 // or all scrapers have finished execution.
-func (c *Cli) Run(ctx context.Context) error {
+func (i *Importer) Run(ctx context.Context) error {
 	var wg sync.WaitGroup
 
-	for _, s := range c.Scrapers {
+	for _, s := range i.Scrapers {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
-			c.startScraper(ctx, s)
+			i.startScraper(ctx, s)
 		}()
 	}
 
@@ -98,19 +98,19 @@ func (c *Cli) Run(ctx context.Context) error {
 // It periodically executes the scraper based on the configured interval
 // and handles scraping errors by logging warnings. The method respects
 // context cancellation and will exit when the context is done.
-func (c *Cli) startScraper(ctx context.Context, scraper Scraper) {
+func (i *Importer) startScraper(ctx context.Context, scraper Scraper) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(c.Config.Scraping.Interval):
+		case <-time.After(i.Config.Scraping.Interval):
 			md, err := scraper.Scrape(ctx)
 			if err != nil {
-				c.Logger.Warn("scraping error", "error", err)
+				i.Logger.Warn("scraping error", "error", err)
 				continue
 			}
 
-			c.Logger.Info("scrape successful", "received bytes", len(md))
+			i.Logger.Info("scrape successful", "received bytes", len(md))
 		}
 	}
 }
