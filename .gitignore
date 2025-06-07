@@ -1,2 +1,6 @@
 # generated files
 dist/
+mocks/
+
+# test output files
+cover.cov

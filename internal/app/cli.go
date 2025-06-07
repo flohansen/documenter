@@ -2,51 +2,66 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/flohansen/documenter/internal/scraper"
-	"gopkg.in/yaml.v3"
 )
 
-type CliConfig struct {
-	ConfigPath string
+//go:generate mockgen -destination=mocks/scraper.go -package=mocks . Scraper
+
+type Scraper interface {
+	Scrape(ctx context.Context) ([]byte, error)
+}
+
+//go:generate mockgen -destination=mocks/logger.go -package=mocks . Logger
+
+type Logger interface {
+	Warn(format string, v ...any)
 }
 
 type Cli struct {
-	config CliConfig
+	Config   Config
+	Scrapers []Scraper
+	Logger   Logger
 }
 
-func NewCli(cfg CliConfig) *Cli {
+func NewCli(cfg Config) *Cli {
+	var scrapers []Scraper
+	for _, section := range cfg.Docs.Sections {
+		var s Scraper
+		switch section.Type {
+		case SectionTypeGit:
+			s = scraper.NewGitScraper(section.URL, scraper.WithSSHKey(section.SSHKey))
+		default:
+			continue
+		}
+
+		scrapers = append(scrapers, s)
+	}
+
+	loggerHandler := slog.NewTextHandler(os.Stdout, nil)
+	logger := slog.New(loggerHandler)
+
 	return &Cli{
-		config: cfg,
+		Config:   cfg,
+		Scrapers: scrapers,
+		Logger:   logger,
 	}
 }
 
 func (c *Cli) Run(ctx context.Context) error {
-	config, err := c.readConfig()
-	if err != nil {
-		return fmt.Errorf("read config error: %w", err)
-	}
-
 	var wg sync.WaitGroup
 
-	for _, section := range config.Docs.Sections {
+	for _, s := range c.Scrapers {
 		wg.Add(1)
 
 		go func() {
 			defer wg.Done()
-
-			switch section.Type {
-			case SectionTypeGit:
-				startScraper(ctx, scraper.NewGitScraper(
-					section.URL,
-					scraper.WithSSHKey(section.SSHKey),
-				))
-			}
+			c.startScraper(ctx, s)
 		}()
 	}
 
@@ -54,38 +69,19 @@ func (c *Cli) Run(ctx context.Context) error {
 	return nil
 }
 
-type Scraper interface {
-	Scrape(ctx context.Context) ([]byte, error)
-}
-
-func startScraper(ctx context.Context, scraper Scraper) {
+func (c *Cli) startScraper(ctx context.Context, scraper Scraper) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case <-time.After(5 * time.Second):
+		case <-time.After(c.Config.ScrapeInterval):
 			md, err := scraper.Scrape(ctx)
 			if err != nil {
-				log.Printf("error scraping: %s", err)
+				c.Logger.Warn("scraping error: %s", err)
 				continue
 			}
 
 			log.Printf("received %d bytes", len(md))
 		}
 	}
-}
-
-func (c *Cli) readConfig() (Config, error) {
-	f, err := os.Open(c.config.ConfigPath)
-	if err != nil {
-		return Config{}, fmt.Errorf("could not open file: %w", err)
-	}
-	defer f.Close()
-
-	var config Config
-	if err := yaml.NewDecoder(f).Decode(&config); err != nil {
-		return Config{}, fmt.Errorf("json decode error: %w", err)
-	}
-
-	return config, nil
 }

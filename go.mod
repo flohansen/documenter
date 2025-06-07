@@ -5,6 +5,7 @@ go 1.24.3
 require (
 	github.com/go-git/go-git/v5 v5.16.1
 	github.com/stretchr/testify v1.10.0
+	go.uber.org/mock v0.5.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 

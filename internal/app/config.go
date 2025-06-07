@@ -2,12 +2,14 @@ package app
 
 import (
 	"fmt"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
-	Docs DocsConfig `yaml:"docs"`
+	Docs           DocsConfig    `yaml:"docs"`
+	ScrapeInterval time.Duration `yaml:"scrapeInterval"`
 }
 
 type DocsConfig struct {
