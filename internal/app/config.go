@@ -1,4 +1,4 @@
-package docs
+package app
 
 import (
 	"fmt"
@@ -15,9 +15,9 @@ type DocsConfig struct {
 }
 
 type SectionConfig struct {
-	Name      string      `yaml:"name"`
-	Type      SectionType `yaml:"type"`
-	URL       string      `yaml:"url"`
+	Name   string      `yaml:"name"`
+	Type   SectionType `yaml:"type"`
+	URL    string      `yaml:"url"`
 	SSHKey string      `yaml:"sshKey"`
 }
 

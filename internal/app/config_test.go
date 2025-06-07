@@ -1,10 +1,10 @@
-package docs_test
+package app_test
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/flohansen/documenter/internal/docs"
+	"github.com/flohansen/documenter/internal/app"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
@@ -21,15 +21,15 @@ func TestConfig_UnmarshalYAML(t *testing.T) {
 		}, "\n"))
 
 		// act
-		var config docs.Config
+		var config app.Config
 		err := yaml.Unmarshal(b, &config)
 
 		// assert
 		assert.NoError(t, err)
-		assert.Equal(t, docs.Config{
-			Docs: docs.DocsConfig{
-				Sections: []docs.SectionConfig{
-					{Name: "Test", Type: docs.SectionTypeGit, URL: "https://some.url.com/repo"},
+		assert.Equal(t, app.Config{
+			Docs: app.DocsConfig{
+				Sections: []app.SectionConfig{
+					{Name: "Test", Type: app.SectionTypeGit, URL: "https://some.url.com/repo"},
 				},
 			},
 		}, config)
@@ -46,7 +46,7 @@ func TestConfig_UnmarshalYAML(t *testing.T) {
 		}, "\n"))
 
 		// act
-		var config docs.Config
+		var config app.Config
 		err := yaml.Unmarshal(b, &config)
 
 		// assert
