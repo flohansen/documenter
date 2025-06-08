@@ -57,7 +57,7 @@ type Importer struct {
 // It initializes scrapers based on the configuration sections and sets up
 // the appropriate logger format. Scrapers are created for each configured
 // documentation section, and unsupported section types are skipped.
-func NewImporter(cfg Config) *Importer {
+func NewImporter(repo DocumentationRepository, cfg Config) *Importer {
 	var scrapers []Scraper
 	for _, section := range cfg.Docs.Sections {
 		var s Scraper
@@ -81,9 +81,10 @@ func NewImporter(cfg Config) *Importer {
 	logger := slog.New(loggerHandler)
 
 	return &Importer{
-		Config:   cfg,
-		Scrapers: scrapers,
-		Logger:   logger,
+		Config:     cfg,
+		Scrapers:   scrapers,
+		Logger:     logger,
+		Repository: repo,
 	}
 }
 

@@ -24,7 +24,7 @@ func main() {
 		log.Fatalf("could not read config: %v", err)
 	}
 
-	cli := app.NewImporter(config)
+	cli := app.NewImporter(nil, config)
 	if err := cli.Run(app.SignalContext()); err != nil {
 		log.Fatalf("cli error: %v", err)
 	}

@@ -30,7 +30,7 @@ func TestCli_NewCli(t *testing.T) {
 		}
 
 		// act
-		cli := app.NewImporter(config)
+		cli := app.NewImporter(nil, config)
 
 		// assert
 		assert.Equal(t, 5*time.Second, cli.Config.Scraping.Interval)
