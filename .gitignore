@@ -1,6 +1,10 @@
 # generated files
 dist/
 mocks/
+internal/database/
 
 # test output files
 cover.cov
+
+# binaries
+bin/
