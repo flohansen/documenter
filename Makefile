@@ -33,7 +33,7 @@ test: generate
 	$(GO) test ./... -cover -race
 
 .PHONY: docker-build
-docker-build:
+docker-build: generate
 	$(DOCKER) build -t $(IMPORTER_IMAGE):$(IMPORTER_TAG) .
 
 $(LOCALBIN):
