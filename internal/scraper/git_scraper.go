@@ -11,12 +11,14 @@ import (
 )
 
 type GitScraper struct {
+	name    string
 	repoURL string
 	sshKey  *string
 }
 
-func NewGitScraper(repoURL string, opts ...GitScraperOption) *GitScraper {
+func NewGitScraper(name string, repoURL string, opts ...GitScraperOption) *GitScraper {
 	gs := &GitScraper{
+		name:    name,
 		repoURL: repoURL,
 	}
 
@@ -25,6 +27,10 @@ func NewGitScraper(repoURL string, opts ...GitScraperOption) *GitScraper {
 	}
 
 	return gs
+}
+
+func (s *GitScraper) Name() string {
+	return s.name
 }
 
 func (s *GitScraper) Scrape(ctx context.Context) ([]byte, error) {

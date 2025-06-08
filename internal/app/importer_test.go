@@ -3,11 +3,13 @@ package app_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/flohansen/documenter/internal/app"
 	"github.com/flohansen/documenter/internal/app/mocks"
+	"github.com/flohansen/documenter/internal/domain"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
@@ -40,6 +42,12 @@ func TestCli_Run(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	scraperMock := mocks.NewMockScraper(ctrl)
 	loggerMock := mocks.NewMockLogger(ctrl)
+	repoMock := mocks.NewMockDocumentationRepository(ctrl)
+
+	scraperMock.EXPECT().
+		Name().
+		Return("name").
+		AnyTimes()
 
 	t.Run("should periodically execute scaper", func(t *testing.T) {
 		// assign
@@ -50,12 +58,21 @@ func TestCli_Run(t *testing.T) {
 					Interval: 10 * time.Millisecond,
 				},
 			},
-			Scrapers: []app.Scraper{scraperMock},
-			Logger:   loggerMock,
+			Scrapers:   []app.Scraper{scraperMock},
+			Logger:     loggerMock,
+			Repository: repoMock,
 		}
 
 		loggerMock.EXPECT().
-			Info("scrape successful", "received bytes", 0).
+			Info("scraped target", "name", "name").
+			Times(2)
+
+		repoMock.EXPECT().
+			UpsertDocumentation(ctx, domain.Documentation{
+				Name:    "name",
+				Content: []byte{},
+			}).
+			Return(nil).
 			Times(2)
 
 		scraperMock.EXPECT().
@@ -84,20 +101,29 @@ func TestCli_Run(t *testing.T) {
 					Interval: 10 * time.Millisecond,
 				},
 			},
-			Scrapers: []app.Scraper{scraperMock},
-			Logger:   loggerMock,
+			Scrapers:   []app.Scraper{scraperMock},
+			Logger:     loggerMock,
+			Repository: repoMock,
 		}
 
 		loggerMock.EXPECT().
-			Info("scrape successful", "received bytes", 0).
+			Info("scraped target", "name", "name").
 			Times(1)
 		loggerMock.EXPECT().
-			Warn("scraping error", "error", errors.New("scrape error")).
+			Warn("scraper error", "error", fmt.Errorf("scrape error: %w", errors.New("error"))).
+			Times(1)
+
+		repoMock.EXPECT().
+			UpsertDocumentation(ctx, domain.Documentation{
+				Name:    "name",
+				Content: []byte{},
+			}).
+			Return(nil).
 			Times(1)
 
 		scraperMock.EXPECT().
 			Scrape(ctx).
-			Return(nil, errors.New("scrape error")).
+			Return(nil, errors.New("error")).
 			Times(1)
 		scraperMock.EXPECT().
 			Scrape(ctx).

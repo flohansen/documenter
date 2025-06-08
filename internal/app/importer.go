@@ -2,11 +2,13 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/flohansen/documenter/internal/domain"
 	"github.com/flohansen/documenter/internal/scraper"
 )
 
@@ -16,6 +18,8 @@ import (
 // Implementations should be able to scrape content from their respective sources
 // and return the scraped data as bytes.
 type Scraper interface {
+	// Name returns the name of the documentation that the scraper scrapes for.
+	Name() string
 	// Scrape extracts documentation content from the configured source.
 	// It returns the scraped content as bytes or an error if scraping fails.
 	Scrape(ctx context.Context) ([]byte, error)
@@ -32,12 +36,21 @@ type Logger interface {
 	Info(format string, v ...any)
 }
 
+//go:generate mockgen -destination=mocks/documentation_repository.go -package=mocks . DocumentationRepository
+
+// DocumentationRepository defines the interface for persisting documentation data.
+// It provides methods for writing data to a database.
+type DocumentationRepository interface {
+	UpsertDocumentation(ctx context.Context, doc domain.Documentation) error
+}
+
 // Importer represents the main command-line interface application.
 // It manages the configuration, scrapers, and logging for the documentation system.
 type Importer struct {
-	Config   Config    // Application configuration
-	Scrapers []Scraper // List of active scrapers
-	Logger   Logger    // Logger instance for application logging
+	Config     Config                  // Application configuration
+	Scrapers   []Scraper               // List of active scrapers
+	Logger     Logger                  // Logger instance for application logging
+	Repository DocumentationRepository // Repository to persist documentation data
 }
 
 // NewImporter creates a new CLI instance with the provided configuration.
@@ -50,7 +63,7 @@ func NewImporter(cfg Config) *Importer {
 		var s Scraper
 		switch section.Type {
 		case SectionTypeGit:
-			s = scraper.NewGitScraper(section.URL, scraper.WithSSHKey(section.SSHKey))
+			s = scraper.NewGitScraper(section.Name, section.URL, scraper.WithSSHKey(section.SSHKey))
 		default:
 			continue
 		}
@@ -99,18 +112,37 @@ func (i *Importer) Run(ctx context.Context) error {
 // and handles scraping errors by logging warnings. The method respects
 // context cancellation and will exit when the context is done.
 func (i *Importer) startScraper(ctx context.Context, scraper Scraper) {
+	if err := i.scraperLoop(ctx, scraper); err != nil {
+		i.Logger.Warn("scraper error", "error", err)
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-time.After(i.Config.Scraping.Interval):
-			md, err := scraper.Scrape(ctx)
-			if err != nil {
-				i.Logger.Warn("scraping error", "error", err)
-				continue
+			if err := i.scraperLoop(ctx, scraper); err != nil {
+				i.Logger.Warn("scraper error", "error", err)
 			}
-
-			i.Logger.Info("scrape successful", "received bytes", len(md))
 		}
 	}
+}
+
+// scraperLoop represents a single step in the scraping loop. It tries to
+// scrape its target and persist the data.
+func (i *Importer) scraperLoop(ctx context.Context, scraper Scraper) error {
+	md, err := scraper.Scrape(ctx)
+	if err != nil {
+		return fmt.Errorf("scrape error: %w", err)
+	}
+
+	if err := i.Repository.UpsertDocumentation(ctx, domain.Documentation{
+		Name:    scraper.Name(),
+		Content: md,
+	}); err != nil {
+		return fmt.Errorf("upsert documentation error: %w", err)
+	}
+
+	i.Logger.Info("scraped target", "name", scraper.Name())
+	return nil
 }

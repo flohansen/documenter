@@ -11,7 +11,7 @@ import (
 func TestGitScraper_Scrape(t *testing.T) {
 	t.Run("should return README.md content of publicly available repository", func(t *testing.T) {
 		// assign
-		scpr := scraper.NewGitScraper("https://github.com/flohansen/documenter")
+		scpr := scraper.NewGitScraper("name", "https://github.com/flohansen/documenter")
 
 		// act
 		md, err := scpr.Scrape(context.Background())
