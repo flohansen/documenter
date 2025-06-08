@@ -1,19 +1,15 @@
 FROM golang:1.24-alpine AS builder
-RUN apk update && apk add make
 
 WORKDIR /usr/src/app
 
 COPY go.mod go.mod
-# COPY go.sum go.sum
+COPY go.sum go.sum
 RUN go mod download
 
-COPY Makefile Makefile
 COPY cmd cmd
 COPY internal internal
-RUN make
+RUN CGO_ENABLED=0 go build -o importer cmd/importer/main.go
 
 FROM scratch
-
-COPY --from=builder /usr/src/app/dist/server /server
-
-ENTRYPOINT ["/server"]
+COPY --from=builder /usr/src/app/importer /importer
+ENTRYPOINT ["/importer"]
