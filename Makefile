@@ -8,7 +8,10 @@ DOCKER ?= docker
 # Tools
 LOCALBIN ?= $(shell pwd)/bin
 SQLC ?= $(LOCALBIN)/sqlc
+MOCKGEN ?= $(LOCALBIN)/mockgen
+
 SQLC_VERSION ?= v1.29.0
+MOCKGEN_VERSION ?= v0.5.2
 
 # Build Outputs
 IMPORTER_BIN ?= dist/importer
@@ -24,9 +27,9 @@ build: generate
 	$(GOENV) $(GO) build -o $(IMPORTER_BIN) cmd/importer/main.go
 
 .PHONY: generate
-generate: sqlc
+generate: mockgen sqlc
 	$(SQLC) generate
-	$(GO) generate ./...
+	PATH=$(LOCALBIN):$(PATH) $(GO) generate ./...
 
 .PHONY: test
 test: generate
@@ -43,3 +46,8 @@ $(LOCALBIN):
 sqlc: $(SQLC)
 $(SQLC): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) $(GO) install github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
+
+.PHONY: mockgen
+mockgen: $(MOCKGEN)
+$(MOCKGEN): $(LOCALBIN)
+	GOBIN=$(LOCALBIN) $(GO) install go.uber.org/mock/mockgen@$(MOCKGEN_VERSION)
