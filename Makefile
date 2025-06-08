@@ -36,9 +36,6 @@ test: generate
 docker-build:
 	$(DOCKER) build -t $(IMPORTER_IMAGE):$(IMPORTER_TAG) .
 
-.PHONY: install
-install: $(LOCALBIN)
-
 $(LOCALBIN):
 	mkdir -p $@
 
