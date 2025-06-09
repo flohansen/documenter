@@ -74,6 +74,54 @@ func TestDocRepoPostgres_Integration(t *testing.T) {
 			}, getDoc("name"))
 		})
 	})
+
+	t.Run("GetDocumentations", func(t *testing.T) {
+		t.Run("should return empty slice if there are no rows", func(t *testing.T) {
+			beforeEach()
+
+			// assign
+			ctx := context.Background()
+
+			// act
+			docs, err := repo.GetDocumentations(ctx)
+
+			// assert
+			assert.NoError(t, err)
+			assert.Empty(t, docs)
+		})
+
+		t.Run("should return all docs", func(t *testing.T) {
+			beforeEach()
+
+			// assign
+			ctx := context.Background()
+			insertDoc(database.Documentation{
+				ID:      0,
+				Name:    "doc1",
+				Content: []byte("content1"),
+			})
+			insertDoc(database.Documentation{
+				ID:      1,
+				Name:    "doc2",
+				Content: []byte("content2"),
+			})
+
+			// act
+			docs, err := repo.GetDocumentations(ctx)
+
+			// assert
+			assert.NoError(t, err)
+			assert.Len(t, docs, 2)
+			assert.Contains(t, docs, domain.Documentation{
+				Name:    "doc1",
+				Content: []byte("content1"),
+			})
+			assert.Contains(t, docs, domain.Documentation{
+				Name:    "doc2",
+				Content: []byte("content2"),
+			})
+		})
+	})
 }
 
 func beforeEach(t *testing.T, db *pgx.Conn) func() {

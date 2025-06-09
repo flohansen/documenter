@@ -1,0 +1,19 @@
+{{- define "index" -}}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Documenter</title>
+    </head>
+    <body>
+        <nav>
+            <ul>
+                {{ range .Navigation.Items -}}
+                <li><a href="/sections/{{ .Name }}">{{ .Name }}</a></li>
+                {{- end }}
+            </ul>
+        </nav>
+
+        {{ .Content }}
+    </body>
+</html>
+{{- end -}}

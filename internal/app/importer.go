@@ -34,6 +34,8 @@ type Logger interface {
 	Warn(format string, v ...any)
 	// Info logs an informational message with optional formatted arguments.
 	Info(format string, v ...any)
+	// Error logs an error message with optional formatted arguments.
+	Error(format string, v ...any)
 }
 
 //go:generate mockgen -destination=mocks/documentation_repository.go -package=mocks . DocumentationRepository

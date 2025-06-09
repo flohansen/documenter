@@ -7,8 +7,8 @@ require (
 	github.com/docker/go-connections v0.5.0
 	github.com/go-git/go-git/v5 v5.16.1
 	github.com/golang-migrate/migrate/v4 v4.18.3
+	github.com/gomarkdown/markdown v0.0.0-20250311123330-531bef5e742b
 	github.com/jackc/pgx/v5 v5.7.4
-	github.com/lib/pq v1.10.9
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
 	go.uber.org/mock v0.5.2
@@ -48,6 +48,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.17.4 // indirect
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect

@@ -1,17 +1,20 @@
 package app
 
-import "context"
+import (
+	"context"
+	"net/http"
+)
 
 type Server struct {
-	Repository DocumentationRepository
+	Handler http.Handler
 }
 
-func NewServer(repo DocumentationRepository) *Server {
+func NewServer(handler http.Handler) *Server {
 	return &Server{
-		Repository: repo,
+		Handler: handler,
 	}
 }
 
 func (s *Server) Run(ctx context.Context) error {
-	return nil
+	return http.ListenAndServe(":3000", s.Handler)
 }

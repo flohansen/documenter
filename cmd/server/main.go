@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
-	"log"
+	"log/slog"
+	"os"
 
 	"github.com/flohansen/documenter/internal/app"
+	"github.com/flohansen/documenter/internal/handler"
+	"github.com/flohansen/documenter/internal/renderer"
 	"github.com/flohansen/documenter/internal/repository"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,19 +22,25 @@ func main() {
 	flag.Parse()
 
 	ctx := app.SignalContext()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	pool, err := pgxpool.New(ctx, flags.Database)
 	if err != nil {
-		log.Fatalf("could not create db pool: %v", err)
+		logger.Error("could not create db pool", "error", err)
+		os.Exit(1)
 	}
 	if err := pool.Ping(ctx); err != nil {
-		log.Fatalf("could not ping database: %v", err)
+		logger.Error("could not ping database", "error", err)
+		os.Exit(1)
 	}
 
-	repo := repository.NewDocRepoPostgres(pool)
+	docRepo := repository.NewDocRepoPostgres(pool)
+	docRenderer := renderer.NewMarkdownRenderer()
+	docHandler := handler.NewDocHandler(docRepo, docRenderer, logger)
 
-	svr := app.NewServer(repo)
+	svr := app.NewServer(docHandler)
 	if err := svr.Run(ctx); err != nil {
-		log.Fatalf("server error: %v", err)
+		logger.Error("server error", "error", err)
+		os.Exit(1)
 	}
 }
